@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naresh Outdoor Work</title>
+<style>
+  body { font-family: sans-serif; background: #fff5f8; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fff; padding: 24px; border-radius: 16px; width: 90%; max-width: 360px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  h1 { color: #c2185b; font-size: 22px; text-align: center; margin-top: 0; }
+  input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+  button { width: 100%; padding: 12px; background: #e91e63; color: #fff; border: none; border-radius: 8px; font-size: 16px; margin-top: 8px; }
+  .msg { color: #c62828; text-align: center; min-height: 20px; }
+  #homeBox { display: none; text-align: center; }
+</style>
+</head>
+<body>
+<div class="card" id="loginBox">
+  <h1>🌸 Naresh Outdoor Work</h1>
+  <input id="id" placeholder="Mobile number (10 digit) ya owner ka email">
+  <input id="pass" type="password" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <p class="msg" id="msg"></p>
+</div>
+<div class="card" id="homeBox">
+  <h1 id="welcome"></h1>
+  <button id="logoutBtn">Logout</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyB7Ij7CqdYBnj5m9SLP-QiOcNXUtBhcFLg",
+  authDomain: "naresh-outdoor-work-52112.firebaseapp.com",
+  projectId: "naresh-outdoor-work-52112",
+  storageBucket: "naresh-outdoor-work-52112.firebasestorage.app",
+  messagingSenderId: "69990846847",
+  appId: "1:69990846847:web:614258fd0953fd89bd8a4a",
+  measurementId: "G-5B4GJN9P7Q"
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = id => document.getElementById(id);
+
+// Mobile number ko email jaisa bana dete hain, taki workers ko email na banana pade
+function toEmail(id) {
+  id = id.trim();
+  return id.includes("@") ? id : id + "@naresh.app";
+}
+
+$("loginBtn").onclick = async () => {
+  $("msg").textContent = "";
+  try {
+    await signInWithEmailAndPassword(auth, toEmail($("id").value), $("pass").value);
+  } catch (e) {
+    $("msg").textContent = "Login nahi hua. ID ya password check karein.";
+  }
+};
+
+$("logoutBtn").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    $("loginBox").style.display = "block";
+    $("homeBox").style.display = "none";
+    return;
+  }
+  // Check karein ki ye owner hai ya worker
+  let role = "worker";
+  try {
+    const snap = await getDoc(doc(db, "config", "owner"));
+    if (snap.exists() && snap.data().uid === user.uid) role = "owner";
+  } catch (e) {
+    role = "worker"; // rules ke hisaab se worker ko config padhne ki ijazat nahi hai
+  }
+  $("welcome").textContent = role === "owner" ? "Owner Dashboard 🌸" : "Worker Dashboard 🌸";
+  $("loginBox").style.display = "none";
+  $("homeBox").style.display = "block";
+});
+</script>
+</body>
+</html>
